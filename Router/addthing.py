@@ -49,3 +49,14 @@ async def addthing(
             "content": new_thing.content
         }
     }
+
+@router.get("/getthings")
+async def getthing(current_user: User = Depends(get_current_user)):
+    contents = await Thing.filter(author_id=current_user.id).values_list("content",flat=True)
+    return {
+        "code": 200,
+        "message": "获取成功",
+        "data": {
+            "contents": contents  # 直接返回列表
+        }
+    }
