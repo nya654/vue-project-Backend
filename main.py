@@ -8,24 +8,28 @@ from models import User
 import uvicorn
 from Router.login import router as login_router
 from Router.register import register_router
+from Router.addthing import router as addthing_router
 
 
 app = FastAPI()
 
-
-register_tortoise(
-    app=app,
-
-    config=TORTOISE_ORM,
-)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # 根据你的前端实际端口调整
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,# 根据你的前端实际端口调整
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+register_tortoise(
+    app=app,
+    config=TORTOISE_ORM,
+)
+
 app.include_router(login_router,tags=['login'])
 app.include_router(register_router,tags=['注册模块'])
+
+app.include_router(addthing_router,tags=['添加模块'])
 
 @app.get("/api/hello")
 async def root():
