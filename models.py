@@ -18,7 +18,8 @@ class User(Model):
 class Thing(Model):
     id = fields.IntField(pk=True)
     content = fields.TextField()
-
+    create_at = fields.DatetimeField(auto_now_add=True)
+    is_finish = fields.BooleanField(default=False)
     author: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="things",
