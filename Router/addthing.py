@@ -26,6 +26,7 @@ async def get_current_user(
 
 
 class ThingCreate(BaseModel):  # 改个更准确的名字
+    id: int
     content: str
 
 
@@ -46,17 +47,42 @@ async def addthing(
         "message": "创建成功",
         "data": {
             "id": new_thing.id,
-            "content": new_thing.content
+            "content": new_thing.content,
+            "is_finish": new_thing.is_finish,
         }
     }
 
 @router.get("/getthings")
 async def getthing(current_user: User = Depends(get_current_user)):
-    contents = await Thing.filter(author_id=current_user.id).values_list("content","is_finish")
+    contents = await Thing.filter(author_id=current_user.id).values_list("content","is_finish","id")
     return {
         "code": 200,
         "message": "获取成功",
         "data": {
             "items": contents
         }
+    }
+
+@router.put("/updatethings/{thing_id}")
+async def updatethings(thing_id: int,
+                       request: ThingCreate
+                       ):
+
+    update_data = {
+        "content": request.content,
+        "is_finish": request.is_finish
+    }
+
+    await Thing.filter(id=thing_id).update(**update_data)
+    return {
+        "code": 200,
+        "message": "更新成功"
+    }
+
+@router.delete("/deletethings/{thing_id}")
+async def deletethings(thing_id: int):
+    await Thing.filter(id=thing_id).delete()
+    return {
+        "code": 200,
+        "message": "删除成功"
     }
