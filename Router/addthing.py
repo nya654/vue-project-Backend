@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request,Query
 from pydantic import BaseModel
 from datetime import datetime
 from models import User, Session, Thing  # 确保导入了Thing模型
@@ -28,6 +28,7 @@ async def get_current_user(
 class ThingCreate(BaseModel):  # 改个更准确的名字
     id: int
     content: str
+    is_finish: bool = False
 
 
 @router.post("/addthing")
@@ -39,7 +40,8 @@ async def addthing(
     # 现在current_user已经是验证后的用户对象
     new_thing = await Thing.create(
         content=request.content,
-        author_id=current_user.id  # 确保Thing模型有user_id字段
+        author_id=current_user.id,  # 确保Thing模型有user_id字段
+        is_finish= request.is_finish
     )
 
     return {
@@ -52,9 +54,16 @@ async def addthing(
         }
     }
 
-@router.get("/getthings")
-async def getthing(current_user: User = Depends(get_current_user)):
-    contents = await Thing.filter(author_id=current_user.id).values_list("content","is_finish","id")
+@router.get("/getthings/{date}")
+async def getthing(date: str , current_user: User = Depends(get_current_user)):
+    target_date = datetime.strptime(date, "%Y-%m-%d")
+    start_date = target_date.replace(hour=0, minute=0, second=0)
+    end_date = target_date.replace(hour=23, minute=59, second=59)
+
+
+    contents = await Thing.filter(
+            create_at__gte=start_date,create_at__lte=end_date
+        ).filter(author_id=current_user.id).values_list("content","is_finish","id")
     return {
         "code": 200,
         "message": "获取成功",
