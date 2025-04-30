@@ -1,9 +1,11 @@
 import secrets
 from datetime import datetime, timedelta
+from importlib.resources import contents
 
 from fastapi import APIRouter, HTTPException, Response, Cookie
 from pydantic import BaseModel
 
+from Router.addthing import get_current_user
 from models import User,Session
 from fastapi.security import HTTPBearer
 from fastapi import Depends
@@ -71,6 +73,11 @@ async def login(request: LoginRequest,response: Response):
     )
 
     return {"code": 200, "message": "Login successful"}
+@router.post("/logout")
+async def logout(
+        current_user: User = Depends(get_current_user)
+):
+    await Session.filter(user_id=current_user.id).delete()
 
 
 #从数据库获取用户信息
