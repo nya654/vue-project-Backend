@@ -1,8 +1,9 @@
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException,Response
+from fastapi import APIRouter, HTTPException, Response, Cookie
 from pydantic import BaseModel
+
 from models import User,Session
 from fastapi.security import HTTPBearer
 from fastapi import Depends
@@ -12,7 +13,27 @@ class LoginRequest(BaseModel):
     password: str
 router = APIRouter(prefix="/api")
 
-
+@router.get("/init")
+async def get_user_by_session(
+        session_id: str = Cookie(None,alias="session_id")
+):
+    if not session_id:
+        raise HTTPException(status_code=401, detail="未提供会话ID")
+    session = await Session.get_or_none(
+        session_id=session_id,
+        expires_at__gt=datetime.now()
+    ).prefetch_related("user")
+    if not session or not session.user:
+        raise HTTPException(status_code=401, detail="会话无效或已过期")
+    return {
+        "code":200,
+        "message": "获取成功",
+        "data": {
+            "id": session.user.id,
+            "name": session.user.username,
+            "email": session.user.email
+        }
+    }
 #创建/api/login的登陆接口
 @router.post("/login")
 #用loginRequest来接受POST请求的数据
