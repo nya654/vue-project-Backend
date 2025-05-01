@@ -4,6 +4,7 @@ from importlib.resources import contents
 
 from fastapi import APIRouter, HTTPException, Response, Cookie
 from pydantic import BaseModel
+from typing_inspection.typing_objects import alias
 
 from Router.addthing import get_current_user
 from models import User,Session
@@ -15,7 +16,7 @@ class LoginRequest(BaseModel):
     password: str
 router = APIRouter(prefix="/api")
 
-@router.get("/init")
+@router.post("/init")
 async def get_user_by_session(
         session_id: str = Cookie(None,alias="session_id")
 ):
@@ -85,7 +86,9 @@ async def get_user_by_username(username: str):
     return await User.get_or_none(username=username)
 
 security = HTTPBearer()
-async def get_current_user(session_id: str = Depends(security)) -> User:
+async def get_current_user(
+        session_id: str = Cookie(None,alias="session_id")
+) -> User:
     # 1. 验证 Session 是否存在
     session = await Session.get_or_none(
         session_id=session_id,
